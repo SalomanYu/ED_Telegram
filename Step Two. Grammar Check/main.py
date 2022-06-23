@@ -52,7 +52,7 @@ async def get_question_1(message: types.Message, state: FSMContext):
                 server.update_skill(server_data.current_index)
             else:
                 server.update_skill(server_data.current_index-1)
-        server.post_config_info(Configuration(server_data.path, server_data.count, server_data.current_index+1, finished=False))
+        server.update_config(Configuration(server_data.path, server_data.count, server_data.current_index+1, finished=False))
             
         question = server.get_skill(server_data.current_index)
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
@@ -84,7 +84,7 @@ async def get_question_2(message: types.Message, state: FSMContext):
         else:
             server.update_skill(server_data.current_index-1)
 
-            server.post_config_info(Configuration(server_data.path, server_data.count, server_data.current_index + 1, finished=False))
+            server.update_config(Configuration(server_data.path, server_data.count, server_data.current_index + 1, finished=False))
             question = server.get_skill(server_data.current_index)
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
             markup.add('Нет', 'Да')
@@ -109,7 +109,7 @@ async def rename_func(message: types.Message, state:FSMContext):
     try:
         server_data = server.get_config_info()
         server.update_skill(server_data.current_index - 1, new_value=message.text.capitalize())
-        server.post_config_info(Configuration(server_data.path, server_data.count, server_data.current_index + 1, finished=False))
+        server.update_config(Configuration(server_data.path, server_data.count, server_data.current_index + 1, finished=False))
 
         question = server.get_skill(server_data.current_index)
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)

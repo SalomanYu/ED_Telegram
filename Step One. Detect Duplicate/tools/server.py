@@ -1,4 +1,5 @@
 import json
+import os
 import openpyxl
 
 from . import settings
@@ -54,6 +55,10 @@ def add_to_remove(index: int):
     Записывает в файл айди вопроса, который будет потом удален
     Принимает:
         index - номер вопроса в списке файла с вопросами"""
+    if not os.path.exists(settings.DUPLICATES_FILE):
+        file = open(settings.DUPLICATES_FILE, 'w')
+        file.close()
+
     question = get_question(index)
     with open(settings.DUPLICATES_FILE, 'a') as file:
         file.write(f"{question.id}\n")

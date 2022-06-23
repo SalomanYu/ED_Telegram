@@ -14,7 +14,7 @@ def create_config_file(path: str) -> None:
         path - путь до файла, в котором лежат уже обработанные вопросы"""
     data = json.load(open(path, 'r'))
     count = len(data)
-    post_config_info(Configuration(path=path, count=count, current_index=0))
+    update_config(Configuration(path=path, count=count, current_index=0))
 
 
 def get_config_info() -> Configuration:
@@ -25,7 +25,7 @@ def get_config_info() -> Configuration:
     return Configuration(*tuple(data.values()))
 
 
-def post_config_info(info: Configuration) -> None:
+def update_config(info: Configuration) -> None:
     print('Config changed!')
     """Метод позволяет обновлять конфигурационный файл.
     Обычно используется для того, чтобы обновить номер актуального вопроса
@@ -95,7 +95,7 @@ def show_results() -> str:
             sheet.write(row, 2, item['new_name'])
         book.close()
 
-        post_config_info(Configuration(server_data.path, server_data.count, server_data.current_index, True))
+        update_config(Configuration(server_data.path, server_data.count, server_data.current_index, True))
 
         return settings.EXCEL_RESULT_FILENAME
     except BaseException as err:
