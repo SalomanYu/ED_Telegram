@@ -13,6 +13,10 @@
 [//]: # (ADd Image)
 ![](Data/img/pic1.jpg)
 
+## Установка
+Инструкция пока не готова
+
+
 ## Описание работы 
 ### 1. DuplicateRemoverBot
 
