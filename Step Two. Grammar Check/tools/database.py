@@ -1,7 +1,7 @@
 import os
 import sqlite3
 
-from settings import Connection, RowData
+from .settings import Connection, RowData
 
 
 def connect_to_db(name) -> Connection:

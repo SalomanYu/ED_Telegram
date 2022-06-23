@@ -1,8 +1,8 @@
 import json
 import openpyxl
 
-import settings
-from settings import Configuration, Question
+from . import settings
+from .settings import Configuration, Question
 
 
 def create_config_file(path: str) -> None:
@@ -19,7 +19,7 @@ def get_config_info() -> Configuration:
     """Метод даёт актуальную информацию о конфигурационном файле
     Принимает:
         Configuration - именованный кортеж с общей информацией. Подробности в инициализации класса"""
-    data = json.load(open('config.json', 'r'))
+    data = json.load(open(settings.CONFIG_PATH, 'r'))
     return Configuration(*tuple(data.values()))
 
 
@@ -33,7 +33,7 @@ def post_config_info(info: Configuration) -> None:
         'count': info.count,
         'current_index': info.current_index
     }
-    with open('config.json', 'w') as file:
+    with open(settings.CONFIG_PATH, 'w') as file:
         json.dump(result, file, ensure_ascii=False, indent=2)
 
 
@@ -55,7 +55,7 @@ def add_to_remove(index: int):
     Принимает:
         index - номер вопроса в списке файла с вопросами"""
     question = get_question(index)
-    with open('/home/saloman/Documents/Edwica/Other/21.RepeatSkills/Result/duplicates.txt', 'a') as file:
+    with open(settings.DUPLICATES_FILE, 'a') as file:
         file.write(f"{question.id}\n")
     print(f'{[question.id]} Добавлен в список')
 

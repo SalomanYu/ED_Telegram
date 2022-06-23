@@ -7,9 +7,8 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.utils.exceptions import MessageCantBeDeleted, MessageToDeleteNotFound
 
-import server
-import settings
-from settings import Configuration, StateMachine
+from tools import settings, server
+from tools.settings import Configuration, StateMachine
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(settings.TOKEN)

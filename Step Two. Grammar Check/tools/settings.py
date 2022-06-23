@@ -4,8 +4,8 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 
 
 TOKEN = '5423038101:AAG-mktmRDpRE7GfuO1tk-ndA2GAh0g-cZY'
-DATABASE_PATH = "/home/saloman/Documents/Edwica/Other/21.RepeatSkills/JSON/mini_data_for_grammar_bot.json"
-EXCEL_RESULT_FILENAME = "/home/saloman/Documents/Edwica/Other/21.RepeatSkills/Result/data_after_grammar_check.xlsx"
+DATABASE_PATH = "../Data/mini_data_for_grammar_bot.json"
+EXCEL_RESULT_FILENAME = "../Data/data_after_grammar_check.xlsx"
 
 SQL_NAME = 'EditedSkills'
 SQL_TABLE = 'Skills'

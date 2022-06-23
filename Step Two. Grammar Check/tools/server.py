@@ -1,8 +1,10 @@
 import json
-import openpyxl
+import xlsxwriter
 
-import settings
-from settings import Configuration, Question
+from . import settings
+from .settings import Configuration, Skill
+
+from . import database
 
 
 def create_config_file(path: str) -> None:
@@ -19,11 +21,12 @@ def get_config_info() -> Configuration:
     """Метод даёт актуальную информацию о конфигурационном файле
     Принимает:
         Configuration - именованный кортеж с общей информацией. Подробности в инициализации класса"""
-    data = json.load(open('config.json', 'r'))
+    data = json.load(open('tools/config.json', 'r'))
     return Configuration(*tuple(data.values()))
 
 
 def post_config_info(info: Configuration) -> None:
+    print('Config changed!')
     """Метод позволяет обновлять конфигурационный файл.
     Обычно используется для того, чтобы обновить номер актуального вопроса
     Принимает:
@@ -31,62 +34,73 @@ def post_config_info(info: Configuration) -> None:
     result = {
         'path': info.path,
         'count': info.count,
-        'current_index': info.current_index
+        'current_index': info.current_index,
+        'finished': info.finished
     }
-    with open('config.json', 'w') as file:
+    with open('tools/config.json', 'w') as file:
         json.dump(result, file, ensure_ascii=False, indent=2)
 
 
-def get_question(index) -> Question:
+def get_skill(index) -> Skill:
     """Метод возвращает вопрос с номером, переданным в качестве аргумента
     Принимает:
         index - номер вопроса в списке файла с вопросами
     Возвращает:
         Question - именованный кортеж с общей информацией. Подробности в объявлении самого класса"""
     server_data = get_config_info()
-    questions = json.load(open(server_data.path, 'r'))
+    skills = json.load(open(server_data.path, 'r'))
 
-    return Question(*questions[index].values())
+    return Skill(*skills[index].values())
 
 
-def add_to_remove(index: int):
+def update_skill(index: int, new_value: str=''):
     """Метод добавляет вопрос с номером, переданным в качестве аргумента
     Записывает в файл айди вопроса, который будет потом удален
     Принимает:
         index - номер вопроса в списке файла с вопросами"""
-    question = get_question(index)
-    with open('/home/saloman/Documents/Edwica/Other/21.RepeatSkills/Result/duplicates.txt', 'a') as file:
-        file.write(f"{question.id}\n")
-    print(f'{[question.id]} Добавлен в список')
+    data = json.load(open(settings.DATABASE_PATH,  'r'))
+    question = data[index]
+    question['new_name'] = new_value
+    print(question['name'], '-----', question['new_name'])
+    database.add(
+        db_name=settings.SQL_NAME,
+        table_name=settings.SQL_TABLE, 
+        data=settings.RowData(old_name=question['name'],
+                            new_name=question['new_name'],
+                            id_num=question['id']))
 
 
-def clear_database() -> int:
-    """Метод очищает БД(эксель-файл) от списка айди-вопросов из файла для удаления
-    Возвращает:
-        либо 0 - означающий, что нам нечего удалять
-        либо количество навыков, которые мы удалили"""
-    with open(settings.DUPLICATES_FILE, 'r') as file:
-        items_for_remove = [int(i) for i in file.read().split('\n')[:-1]]  # -1 нужен чтобы не брать пустую строку
+    with open(settings.DATABASE_PATH, 'w') as file:
+        json.dump(data, file, ensure_ascii=False, indent=2)
 
-    if items_for_remove:  # Если есть что удалять
-        book = openpyxl.load_workbook(settings.DATABASE_PATH)
-        sheet = book.worksheets[0]
-        for row in sheet.iter_rows():
-            if row[0].value in items_for_remove:
-                sheet.delete_rows(row[0].row)
-                print(f'Deleted {row[0].value}')
 
-        book.save(settings.DATABASE_PATH)
-        print('Успешно сохранили файл')
+def show_results() -> str:
+    """Return path"""
+    try:
+        row = 0
+        server_data = get_config_info()
+        data = json.load(open(server_data.path, 'r'))
+        # data = [{'1':'11', '2':'22'},{'3':'33', '4':'44'}]
+        book = xlsxwriter.Workbook(settings.EXCEL_RESULT_FILENAME)
+        sheet = book.add_worksheet()
 
-        # Чистим файл с повторениями, потому что мы уже удалили все вопросы оттуда
-        file = open(settings.DUPLICATES_FILE, 'w')
-        file.close()
-        return len(items_for_remove)
-    else:
-        return 0
-        print('Nothing')
+        sheet.write(row, 0, 'id')
+        sheet.write(row, 1, 'name')
+        sheet.write(row, 2, 'edited_name')
 
+        for item in data:
+            row += 1
+            sheet.write(row, 0, item['id'])
+            sheet.write(row, 1, item['name'])
+            sheet.write(row, 2, item['new_name'])
+        book.close()
+
+        post_config_info(Configuration(server_data.path, server_data.count, server_data.current_index, True))
+
+        return settings.EXCEL_RESULT_FILENAME
+    except BaseException as err:
+        print('Произошла ошибка', err)
 
 if __name__ == "__main__":
-    create_config_file(settings.LIST_FILTERED_QUESTIONS)
+    # create_config_file(settings.DATABASE_PATH)
+    show_results()
