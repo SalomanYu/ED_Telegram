@@ -17,18 +17,18 @@ storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
 
-@dp.message_handler(lambda message: message.text.lower().strip() not in ["нет", "да", 'готов'], state=StateMachine.first)
+@dp.message_handler(lambda message: message.text.lower().strip() not in ["нет", "да", 'готов'], state=StateMachine.question)
 async def process_gender_invalid(message: types.Message):
-    return await message.reply("Неправильный ответ. Принимается только Да/Нет")
+    """Проверка на корректность ввода от пользователя для первого состояния"""
 
-@dp.message_handler(lambda message: message.text.lower().strip() not in ["нет", "да"], state=StateMachine.second)
-async def process_gender_invalid(message: types.Message):
     return await message.reply("Неправильный ответ. Принимается только Да/Нет")
 
 
 # Начало
 @dp.message_handler(commands='start')
 async def run_bot(message: types.Message):
+    """Запускаем бота. Отправляем инструкцию для того, чтобы бот начинал задавать вопросы. Для этого нужно пользователю написать - готов"""
+
     server_data = server.get_config_info()  # Нужен для отображения количества оставшихся вопросов
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add('Готов')
@@ -37,88 +37,64 @@ async def run_bot(message: types.Message):
     await message.answer('Для начала напишите мне - готов', reply_markup=markup)
 
 
-@dp.message_handler(state=StateMachine.first)
+# Вопрос
+@dp.message_handler(state=StateMachine.question)
 async def get_question_1(message: types.Message, state: FSMContext):
-    logging.info('STATE 1')
-    server_data = server.get_config_info()
+    """Состояние для отправки вопросов. Основная логика в том, чтобы достать из конфига номер текущего вопроса. Задать его пользователю и 
+    обновить номер вопроса в файле конфига"""
+
+    logging.info('STATE 1 activited')
+    server_data = server.get_config_info() 
+    # Пробуем отправить сообщение, перед этим обработав предыдущий ответ 
     try:
-        if message.text.lower().strip() == 'нет':
-            await StateMachine.rename.set()
-            await message.answer('Напишите правильный вариант', reply_markup=types.ReplyKeyboardRemove())
-            return
-        elif message.text.lower().strip() == 'да':
-            print('yo')
-            if server_data.current_index == 0:
-                server.update_skill(server_data.current_index)
+        if message.text.lower().strip() == 'нет': # Если пользователь сказал, что навык неправильно написан
+            await StateMachine.rename.set() # Активируем состояние, ответственное за переименование неправильного навыка
+            await message.answer('Напишите правильный вариант', reply_markup=types.ReplyKeyboardRemove()) # Предлагаем пользователю написать правильный вариант
+            return # Принудительно выходим из состояния, потому что всю работу состояние уже выполнило - делегировало переименование другому состояние
+        elif message.text.lower().strip() == 'да': # Если пользователь сказал, что с навыком всё окей
+            if server_data.current_index == 0: # Эта проверка нужна, чтобы мы не брали вопрос с последним номером, то есть -1 (минус первый)
+                server.update_skill(server_data.current_index) # Если актуальный вопрос под самым первым номером, то обновляем именно его
             else:
-                server.update_skill(server_data.current_index-1)
+                server.update_skill(server_data.current_index-1) # Иначе обновляем предыдующий
+        
+        # Обновляем номер текущего вопроса
         server.update_config(Configuration(server_data.path, server_data.count, server_data.current_index+1, finished=False))
-            
-        question = server.get_skill(server_data.current_index)
+        question = server.get_skill(server_data.current_index) # Забираем информацию о текущем вопросе
+
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
         markup.add('Нет', 'Да')
-        await StateMachine.second.set()
-        await message.answer(f"Правильно написано?\n-{question.name.capitalize()}\n"
+        await StateMachine.question.set()
+        await message.answer(   f"Правильно написано?\n-{question.name.capitalize()}\n"
                                 f"Осталось: {server_data.count - server_data.current_index}",
-                                reply_markup=markup)
-
-    except IndexError:
+                                reply_markup=markup )
+    except IndexError: # Если вопросы закончились
         logging.error('INDEX ERROR')
-        if not server_data.finished:
-            await state.update_data(last_answer=message.text)
+        if not server_data.finished: # Если мы еще не завершали работу,  то запоминаем последний ответ в кэш и отдельно обрабатываем его
+            await state.update_data(last_answer=message.text) 
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
             markup.add('Завершить')
             await message.answer('❗Вопросы закончились!', reply_markup=markup)
             await StateMachine.last.set()
 
 
-@dp.message_handler(state=StateMachine.second)
-async def get_question_2(message: types.Message, state: FSMContext):
-    logging.info('STATE 2')
-    server_data = server.get_config_info()
-    try:
-        if message.text.lower().strip() == 'нет':
-            await StateMachine.rename.set()
-            await message.answer('Напишите правильный вариант', reply_markup=types.ReplyKeyboardRemove())
-            return
-        else:
-            server.update_skill(server_data.current_index-1)
-
-            server.update_config(Configuration(server_data.path, server_data.count, server_data.current_index + 1, finished=False))
-            question = server.get_skill(server_data.current_index)
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-            markup.add('Нет', 'Да')
-            await StateMachine.first.set()
-            await message.answer(f"Правильно написано?\n-{question.name.capitalize()}\n"
-                                 f"Осталось: {server_data.count - server_data.current_index}",
-                                 reply_markup=markup)
-
-    except IndexError:
-        logging.error('INDEX ERROR')
-        if not server_data.finished:
-            await state.update_data(last_answer=message.text)
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-            markup.add('Завершить')
-            await message.answer('❗Вопросы закончились!', reply_markup=markup)
-            await StateMachine.last.set()
-
-
+# Переименование
 @dp.message_handler(state=StateMachine.rename)
 async def rename_func(message: types.Message, state:FSMContext):
-    logging.info('RENAME STATE')
+    """Состояние активируется во время переименования навыка. После переименования задаёт следующий вопрос и включает состояние вопроса"""
+    logging.info('RENAME STATE activited')
     try:
         server_data = server.get_config_info()
         server.update_skill(server_data.current_index - 1, new_value=message.text.capitalize())
         server.update_config(Configuration(server_data.path, server_data.count, server_data.current_index + 1, finished=False))
-
         question = server.get_skill(server_data.current_index)
+
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
         markup.add('Нет', 'Да')
-        await StateMachine.first.set()
-        await message.answer(f"Правильно написано?\n-{question.name.capitalize()}\n"
-                             f"Осталось: {server_data.count - server_data.current_index}",
-                             reply_markup=markup)
-    except IndexError:
+        await StateMachine.question.set()
+        await message.answer(   f"Правильно написано?\n-{question.name.capitalize()}\n"
+                                f"Осталось: {server_data.count - server_data.current_index}",
+                                reply_markup=markup )
+    except IndexError: #  Аналогичный алгоритм, как у состояния выше
         logging.error('INDEX ERROR')
         if not server_data.finished:
             await state.update_data(last_answer=message.text)
@@ -134,7 +110,7 @@ async def completion(message: types.Message, state: FSMContext):
     logging.info('LAST STATE')
     try:
         data = await state.get_data()  # Обрабатываем последний ответ
-        if data['last_answer'].strip().lower() == 'нет':
+        if data['last_answer'].strip().lower() == 'нет': 
             await StateMachine.rename.set()
             await message.answer('Напишите правильный вариант', reply_markup=types.ReplyKeyboardRemove())
     except BaseException as err:
@@ -149,7 +125,7 @@ async def completion(message: types.Message, state: FSMContext):
 
     if result_path:
         await message.answer('✅\tУспешно создали БД с отредактированными наименованиями\n')
-        await bot.send_document(message.from_user.id, open(result_path,'rb'))
+        # await bot.send_document(message.from_user.id, open(result_path,'rb'))
     else:
         await message.answer('😇БД уже отредактирована! ')
 

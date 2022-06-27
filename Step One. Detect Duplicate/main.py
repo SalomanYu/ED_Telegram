@@ -22,13 +22,13 @@ async def run_bot(message: types.Message):
     server_data = server.get_config_info()  # Нужен для отображения количества оставшихся вопросов
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add('Готов')
-    await StateMachine.first.set()  # Показываем следующий вопрос
+    await StateMachine.question.set()  # Показываем следующий вопрос
     await message.answer(f"Вопросов осталось: {server_data.count - server_data.current_index}")
     await message.answer('Для начала напишите мне - готов', reply_markup=markup)
 
 
-# Переключение между вопросами 1
-@dp.message_handler(lambda message: message.text.lower().strip() in ["да", "нет", 'готов'], state=StateMachine.first)
+# Переключение между вопросами 
+@dp.message_handler(lambda message: message.text.lower().strip() in ["да", "нет", 'готов'], state=StateMachine.question)
 async def get_question_1(message: types.Message, state: FSMContext):
     server_data = server.get_config_info()
     try:
@@ -43,7 +43,7 @@ async def get_question_1(message: types.Message, state: FSMContext):
 
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
         markup.add('Нет', 'Да')
-        await StateMachine.second.set() # Показываем следующий вопрос
+        await StateMachine.question.set() # Показываем следующий вопрос
         await message.answer(f"❔Это повторение?\n\n1️⃣ \t{question.original.capitalize()}\n"
                              f"2️⃣\t{question.duplicate.capitalize()}\n\n"
                              f"🤔Совместимость: {question.percent}%\n"
@@ -57,33 +57,6 @@ async def get_question_1(message: types.Message, state: FSMContext):
         markup.add('Завершить')
         await message.answer('❗Вопросы закончились!', reply_markup=markup)
         await StateMachine.last.set()  # Подключаем состояние завершения работы
-
-
-# Переключение между вопросами 2
-@dp.message_handler(lambda message: message.text.lower().strip() in ["да", "нет", 'готов'], state=StateMachine.second)
-async def get_question_2(message: types.Message, state: FSMContext):
-    server_data = server.get_config_info()
-    try:
-        if message.text.lower().strip() == 'да':
-            server.add_to_remove(server_data.current_index - 1)
-
-        question = server.get_question(server_data.current_index)
-        server.post_config_info(Configuration(server_data.path, server_data.count, server_data.current_index + 1))
-
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-        markup.add('Нет', 'Да')
-        await StateMachine.first.set()
-        await message.answer(f"❔Это повторение?\n\n1️⃣ \t{question.original.capitalize()}\n"
-                             f"2️⃣\t{question.duplicate.capitalize()}\n\n"
-                             f"🤔Совместимость: {question.percent}%\n"
-                             f"📶Осталось: {server_data.count - server_data.current_index}", reply_markup=markup)
-
-    except IndexError:
-        await state.update_data(last_answer=message.text)
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-        markup.add('Завершить')
-        await message.answer('❗Вопросы закончились!', reply_markup=markup)
-        await StateMachine.last.set()
 
 
 # Завершение
@@ -106,9 +79,9 @@ async def completion(message: types.Message, state: FSMContext):
     if duplicates_for_remove:
         await message.answer('✅\tУспешно очистили БД от повторов\n'
                              f'📉Удалили - {duplicates_for_remove} шт.')
-        await bot.send_document(message.from_user.id,
-                                open('/home/saloman/Documents/Edwica/Other/21.RepeatSkills/Data/course_skill.xlsx',
-                                     'rb'))
+        # await bot.send_document(message.from_user.id,
+                                # open(settings.DATABASE_PATH,
+                                    #  'rb'))
     else:
         await message.answer('😇БД уже очищена от повторов или список дубликатов пуст')
 
@@ -122,13 +95,7 @@ async def delete_message(message: types.Message, sleep_time: int = 0):
 
 # Обработка исключений
 @dp.message_handler(lambda message: message.text.lower().strip() not in ["да", "нет", 'готов'],
-                    state=StateMachine.first)
-async def input_invalid(message: types.Message):
-    return await message.reply("Неправильный ответ. Используйте клавиатуру или введите ответ самостоятельно")
-
-
-@dp.message_handler(lambda message: message.text.lower().strip() not in ["да", "нет", 'готов'],
-                    state=StateMachine.second)
+                    state=StateMachine.question)
 async def input_invalid(message: types.Message):
     return await message.reply("Неправильный ответ. Используйте клавиатуру или введите ответ самостоятельно")
 

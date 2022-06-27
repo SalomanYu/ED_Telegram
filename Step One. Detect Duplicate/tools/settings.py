@@ -28,6 +28,5 @@ class Question(NamedTuple):
 
 
 class StateMachine(StatesGroup):
-    first = State()
-    second = State()
+    question = State()
     last = State()

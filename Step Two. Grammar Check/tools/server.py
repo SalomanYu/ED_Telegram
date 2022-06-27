@@ -19,14 +19,13 @@ def create_config_file(path: str) -> None:
 
 def get_config_info() -> Configuration:
     """Метод даёт актуальную информацию о конфигурационном файле
-    Принимает:
+    Возвращает:
         Configuration - именованный кортеж с общей информацией. Подробности в инициализации класса"""
     data = json.load(open('tools/config.json', 'r'))
     return Configuration(*tuple(data.values()))
 
 
 def update_config(info: Configuration) -> None:
-    print('Config changed!')
     """Метод позволяет обновлять конфигурационный файл.
     Обычно используется для того, чтобы обновить номер актуального вопроса
     Принимает:
@@ -39,14 +38,14 @@ def update_config(info: Configuration) -> None:
     }
     with open('tools/config.json', 'w') as file:
         json.dump(result, file, ensure_ascii=False, indent=2)
-
+    print('Config changed!')
 
 def get_skill(index) -> Skill:
     """Метод возвращает вопрос с номером, переданным в качестве аргумента
     Принимает:
         index - номер вопроса в списке файла с вопросами
     Возвращает:
-        Question - именованный кортеж с общей информацией. Подробности в объявлении самого класса"""
+        Skill - именованный кортеж с общей информацией. Подробности в объявлении самого класса"""
     server_data = get_config_info()
     skills = json.load(open(server_data.path, 'r'))
 
@@ -95,7 +94,7 @@ def show_results() -> str:
             sheet.write(row, 2, item['new_name'])
         book.close()
 
-        update_config(Configuration(server_data.path, server_data.count, server_data.current_index, True))
+        update_config(Configuration(server_data.path, server_data.count, server_data.current_index, finished=True))
 
         return settings.EXCEL_RESULT_FILENAME
     except BaseException as err:

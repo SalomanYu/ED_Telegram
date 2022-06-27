@@ -12,10 +12,11 @@ SQL_TABLE = 'Skills'
 
 
 class Configuration(NamedTuple):
+    """1.path - путь до конфиг-файла 2.count - количество вопросов 3.current_index - номер текущего вопроса 4.finished - состояние, указывающее на то, что бот закончил свою работу и обновил все наименования в файле"""
     path: str
     count: int
     current_index: int
-    finished: bool  # Флаг, чтобы понимать, что бот уже закончил работу и обновил все названия и файлы
+    finished: bool
 
 
 class Skill(NamedTuple):
@@ -25,8 +26,7 @@ class Skill(NamedTuple):
 
 
 class StateMachine(StatesGroup):
-    first = State()
-    second = State()
+    question = State()
     rename = State()
     last = State()
 

@@ -1,6 +1,6 @@
 {
-  "path": "/home/saloman/Documents/Edwica/Other/21.RepeatSkills/JSON/mini_data_for_grammar_bot.json",
+  "path": "../Data/mini_data_for_grammar_bot.json",
   "count": 5,
-  "current_index": 5,
-  "finished": false
+  "current_index": 6,
+  "finished": true
 }
