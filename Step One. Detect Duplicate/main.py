@@ -38,19 +38,21 @@ async def get_question_1(message: types.Message, state: FSMContext):
 
         # Здесь мы получаем два навыка для сравнения, их инфу о совместимости и айди
         question = server.get_question(server_data.current_index)
+        print(question)
         # Меняем номер актуального вопроса в конфиге
-        server.post_config_info(Configuration(server_data.path, server_data.count, server_data.current_index + 1))
+        server.post_config_info(Configuration(path=server_data.path, count=server_data.count, current_index=server_data.current_index + 1))
 
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
         markup.add('Нет', 'Да')
         await StateMachine.question.set() # Показываем следующий вопрос
-        await message.answer(f"❔Это повторение?\n\n1️⃣ \t{question.original.capitalize()}\n"
+        await message.answer(f"❔Одинаковые навыки?\n\n1️⃣ \t{question.original.capitalize()}\n"
                              f"2️⃣\t{question.duplicate.capitalize()}\n\n"
                              f"🤔Совместимость: {question.percent}%\n"
                              f"📶Осталось: {server_data.count - server_data.current_index}", reply_markup=markup)
 
     except IndexError:  # Если вопросы закончились
         # Запоминаем последний ответ, который нужно обрабатывать отдельно в последнем состоянии
+        # Без этого aoigram подумает, что нам нужно предыдущее сообщение, а не текущее
         await state.update_data(last_answer=message.text)
 
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
@@ -70,8 +72,7 @@ async def completion(message: types.Message, state: FSMContext):
     except BaseException as err:
         pass
 
-    msg = await message.answer('⏱Пробуем очистить БД от повторов...\n'
-                               'Это может занять некоторое время',
+    msg = await message.answer('⏱Пробуем очистить БД от повторов...\nЭто может занять некоторое время',
                                reply_markup=types.ReplyKeyboardRemove())
     asyncio.create_task(delete_message(msg, 1))  # Удаляем вышеописанное сообщение через секунду
 

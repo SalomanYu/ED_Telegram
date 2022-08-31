@@ -11,6 +11,7 @@ def create_config_file(path: str) -> None:
     Используется один раз, чтобы высчитать количество вопросов для нового файла с вопросами
     Принимает:
         path - путь до файла, в котором лежат уже обработанные вопросы"""
+  
     data = json.load(open(path, 'r'))
     count = len(data)
     post_config_info(Configuration(path=path, count=count, current_index=0))
@@ -18,8 +19,9 @@ def create_config_file(path: str) -> None:
 
 def get_config_info() -> Configuration:
     """Метод даёт актуальную информацию о конфигурационном файле
-    Принимает:
+    Возвращает:
         Configuration - именованный кортеж с общей информацией. Подробности в инициализации класса"""
+   
     data = json.load(open(settings.CONFIG_PATH, 'r'))
     return Configuration(*tuple(data.values()))
 
@@ -29,32 +31,35 @@ def post_config_info(info: Configuration) -> None:
     Обычно используется для того, чтобы обновить номер актуального вопроса
     Принимает:
         Configuration - именованный кортеж с общей информацией. Подробности в объявлении самого класса"""
+ 
     result = {
         'path': info.path,
         'count': info.count,
         'current_index': info.current_index
     }
+
     with open(settings.CONFIG_PATH, 'w') as file:
         json.dump(result, file, ensure_ascii=False, indent=2)
 
 
-def get_question(index) -> Question:
+def get_question(index: int) -> Question:
     """Метод возвращает вопрос с номером, переданным в качестве аргумента
     Принимает:
         index - номер вопроса в списке файла с вопросами
     Возвращает:
-        Question - именованный кортеж с общей информацией. Подробности в объявлении самого класса"""
+        Question - именованный кортеж, отображающий структуру вопроса. Подробности в объявлении самого класса"""
+
     server_data = get_config_info()
     questions = json.load(open(server_data.path, 'r'))
 
     return Question(*questions[index].values())
 
 
-def add_to_remove(index: int):
-    """Метод добавляет вопрос с номером, переданным в качестве аргумента
-    Записывает в файл айди вопроса, который будет потом удален
+def add_to_remove(index: int) -> None:
+    """Метод добавляет id навыка, переданным в качестве аргумента для последующего удаления из БД
     Принимает:
         index - номер вопроса в списке файла с вопросами"""
+   
     if not os.path.exists(settings.DUPLICATES_FILE):
         file = open(settings.DUPLICATES_FILE, 'w')
         file.close()
@@ -70,6 +75,7 @@ def clear_database() -> int:
     Возвращает:
         либо 0 - означающий, что нам нечего удалять
         либо количество навыков, которые мы удалили"""
+    
     with open(settings.DUPLICATES_FILE, 'r') as file:
         items_for_remove = [int(i) for i in file.read().split('\n')[:-1]]  # -1 нужен чтобы не брать пустую строку
 
@@ -89,8 +95,7 @@ def clear_database() -> int:
         file.close()
         return len(items_for_remove)
     else:
-        return 0
-        print('Nothing')
+        return 
 
 
 if __name__ == "__main__":

@@ -32,7 +32,7 @@ async def run_bot(message: types.Message):
     server_data = server.get_config_info()  # Нужен для отображения количества оставшихся вопросов
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add('Готов')
-    await StateMachine.first.set()  # Показываем следующий вопрос
+    await StateMachine.question.set()  # Показываем следующий вопрос
     await message.answer(f"Вопросов осталось: {server_data.count - server_data.current_index}")
     await message.answer('Для начала напишите мне - готов', reply_markup=markup)
 

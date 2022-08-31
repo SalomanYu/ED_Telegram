@@ -24,7 +24,7 @@ class Question(NamedTuple):
     original: str
     duplicate: str
     percent: int
-    id: int
+    duplicate_id: int
 
 
 class StateMachine(StatesGroup):
