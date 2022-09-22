@@ -32,8 +32,8 @@ def get_couple_skills_from_database():
         cursor.execute(query_get_null_couple)
         first_couple = cursor.fetchone()
         connection.close()
-        return SimilarCouple(*first_couple.values())
-
+        if first_couple:return SimilarCouple(*first_couple.values())
+        else:return
 
 def confirm_similarity(couple_id: int, confirm: bool = True) -> None:
     connection = connect_to_db()

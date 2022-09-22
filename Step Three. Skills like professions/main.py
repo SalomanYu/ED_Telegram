@@ -1,26 +1,20 @@
+from aiogram import Bot, executor, Dispatcher, types
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.utils.exceptions import MessageCantBeDeleted, MessageToDeleteNotFound
+from aiogram.dispatcher import FSMContext
+
 import asyncio
 from contextlib import suppress
 
-
-from aiogram import Bot, Dispatcher, types, executor
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher import FSMContext   
-from aiogram.utils.exceptions import MessageCantBeDeleted, MessageToDeleteNotFound
-
-from tools.settings import  StateMachine
-from tools import settings
-from tools import database
+import database
+from config import StateMachine
 
 
-bot = Bot(settings.TOKEN)
+bot = Bot(token="5630191911:AAHRae_J8oNLNLay6otNvbNcAd90yRwEz80")
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
-# Она появилась потому, что без этого бот будет считать предыдущее сообщение пользователя ответом на текущий вопрос (ответа на который ожидает бот)
-# И когда пользователь введет да/нет, это автоматически запишется в ответ того вопроса, который должен появиться после этого ответа
-# Эта переменная необходима для того, чтобы контролировать значения в состояниях ответов пользователя
-CURRENT_QUESTION_ID = None 
-
+CURRENT_SKILL_ID = None
 
 # Начало
 @dp.message_handler(commands='start')
@@ -32,32 +26,37 @@ async def run_bot(message: types.Message):
     await StateMachine.start_question.set()  # Показываем следующий вопрос
     await message.answer('Для начала напишите мне - готов', reply_markup=markup)
 
+@dp.message_handler(commands="professions")
+async def show_professions(message: types.Message):
+    professions = database.get_all_professions()
+    if professions: 
+        text = "\n".join([f"{index+1}. {value[0 ]}" for index, value in enumerate(professions)])
+        await message.answer(f"Вот список профессий:\n {text}")
+    else:
+        await message.answer("Професси пока не были найдены")
 
-@dp.message_handler(state=StateMachine.start_question)
+
+@dp.message_handler( state=StateMachine.start_question)
 async def start(message: types.Message):
     """Вспомогательный метод для запуска первого вопроса. Без этого метода, дублируются первые два вопросы и сбивается весь порядок ответов
     Поэтому был написан этот метод, как отправная точка и добавлена переменная CURRENT_QUESTION_ID"""
 
-    global CURRENT_QUESTION_ID
+    global CURRENT_SKILL_ID
     if message.text.lower() != "готов":
         asyncio.create_task(input_invalid(message))
         return
 
-    couple_skills = database.get_couple_skills_from_database()
-    if not couple_skills:
+    skill = database.get_not_viewed_skill()
+    if not skill:
         await message.answer("Все вопросы закончились! Спасибо", reply_markup=types.ReplyKeyboardRemove())
         quit()
-    log.info("Couple: %s & %s", couple_skills.demand_name, couple_skills.dup_demand_name)
-    CURRENT_QUESTION_ID = couple_skills.id # Меняем значение нашей переменной, тем самым указывая корректный айди вопроса, который нужно обработать
+    # log.info("Couple: %s & %s", couple_skills.demand_name, couple_skills.dup_demand_name)
+    CURRENT_SKILL_ID = skill.iD # Меняем значение нашей переменной, тем самым указывая корректный айди вопроса, который нужно обработать
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add('Нет', 'Да')
-    await message.answer(f"❔Одинаковые навыки?\n\n"
-                        f"1️⃣ \t{couple_skills.demand_name.capitalize()}\n"
-                        f"2️⃣\t{couple_skills.dup_demand_name.capitalize()}\n\n"
-                        f"🤔Совместимость: {couple_skills.similarity}%\n", reply_markup=markup)
+    await message.answer(f"Оставить навык?\n- {skill.title}", reply_markup=markup)
     await StateMachine.question.set()
-
 
 # Переключение между вопросами 
 @dp.message_handler(state=StateMachine.question)
@@ -65,36 +64,52 @@ async def show_question(message: types.Message, state: FSMContext):
     """
     Основной метод, который будет обрабатывать ответы пользователя и изменять значения в БД
     """
-    global CURRENT_QUESTION_ID
+    global CURRENT_SKILL_ID
     if message.text.lower() not in {"да", "нет"}:
         asyncio.create_task(input_invalid(message))
         return
 
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
+    markup.add('Нет', 'Да')
+
     # Меняем значения в БД
     if message.text.lower().strip() == 'да':
-        database.confirm_similarity(couple_id=CURRENT_QUESTION_ID)
-        log.warning("Id: %d - Accept", CURRENT_QUESTION_ID)
+        database.set_confirm_skill(skill_id=CURRENT_SKILL_ID)
+        # log.warning("Id: %d - Accept", CURRENT_QUESTION_ID)
     elif message.text.lower().strip() == 'нет':
-        log.info("Id: %d - Failed", CURRENT_QUESTION_ID)
-        database.confirm_similarity(couple_id=CURRENT_QUESTION_ID, confirm=False)
+        database.set_confirm_skill(skill_id=CURRENT_SKILL_ID, confirm=False)
+
+        await StateMachine.profession_check.set() # Показываем следующий вопрос
+        await message.answer(f"Этот навык похож на профессию?", reply_markup=markup)
+        return
 
     # Получаем новый вопрос
-    couple_skills = database.get_couple_skills_from_database()
-    if not couple_skills:
+    skill = database.get_not_viewed_skill()
+    if not skill:
         await message.answer("Все вопросы закончились! Спасибо", reply_markup=types.ReplyKeyboardRemove())
         quit()
-    CURRENT_QUESTION_ID = couple_skills.id
-    log.info("Couple: %s & %s", couple_skills.demand_name, couple_skills.dup_demand_name)
+    CURRENT_SKILL_ID = skill.iD
+    # log.info("Couple: %s & %s", couple_skills.demand_name, couple_skills.dup_demand_name)
 
 
     # Показываем вопрос пользователю
+    await StateMachine.question.set() # Показываем следующий вопрос
+    await message.answer(f"Оставить навык?\n- {skill.title}", reply_markup=markup)
+
+
+@dp.message_handler(state=StateMachine.profession_check)
+async def check_profession(message: types.Message, state: FSMContext):
+    """Попадаем сюда, когда нам не подходит навык. Здесь будем уточнять является навык профессией или нет"""
+    global CURRENT_SKILL_ID
+    if message.text.lower() == "да":
+        database.confirm_profession(skill_id=CURRENT_SKILL_ID)
+    
+    skill = database.get_not_viewed_skill()
+    CURRENT_SKILL_ID = skill.iD
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add('Нет', 'Да')
     await StateMachine.question.set() # Показываем следующий вопрос
-    await message.answer(f"❔Одинаковые навыки?\n\n"
-                            f"1️⃣ \t{couple_skills.demand_name.capitalize()}\n"
-                            f"2️⃣\t{couple_skills.dup_demand_name.capitalize()}\n\n"
-                            f"🤔Совместимость: {couple_skills.similarity}%\n", reply_markup=markup)
+    await message.answer(f"Оставить навык?\n- {skill.title}", reply_markup=markup)
 
 
 # Функция для удаления сообщений
@@ -111,6 +126,11 @@ async def input_invalid(message: types.Message):
     return await message.reply("Неправильный ответ. Используйте клавиатуру или введите ответ самостоятельно")
 
 
-if __name__ == '__main__':
-    log = settings.start_logging()
+
+if __name__ == "__main__":
+    dp.bot.set_my_commands([
+        types.BotCommand(command="start", description='запустить бота'),
+        types.BotCommand(command="professions", description='показать список профессий'),
+        types.BotCommand(command="continue", description='продолжить работу с ботом'),
+    ])
     executor.start_polling(dp, skip_updates=True)
