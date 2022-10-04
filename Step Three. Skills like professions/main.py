@@ -128,9 +128,4 @@ async def input_invalid(message: types.Message):
 
 
 if __name__ == "__main__":
-    dp.bot.set_my_commands([
-        types.BotCommand(command="start", description='запустить бота'),
-        types.BotCommand(command="professions", description='показать список профессий'),
-        types.BotCommand(command="continue", description='продолжить работу с ботом'),
-    ])
     executor.start_polling(dp, skip_updates=True)

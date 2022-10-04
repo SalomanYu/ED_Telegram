@@ -30,6 +30,7 @@ async def run_bot(message: types.Message):
     
     # Запускаем вспомогательный метод, с которого всё начнется 
     await StateMachine.start_question.set()  # Показываем следующий вопрос
+    await message.answer(settings.WELCOME_TEXT)
     await message.answer('Для начала напишите мне - готов', reply_markup=markup)
 
 
