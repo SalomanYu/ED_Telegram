@@ -21,7 +21,7 @@ def connect_to_db() -> Connection:
         exit(f"Error by connection: {ex}")
 
 
-def get_couple_skills_from_database():
+def get_couple_skills_from_database() -> SimilarCouple:
     """Возвращает самую первую пару навыков, у которой значение is_duplicate является None. 
     Таким образом, мы понимаем, что с этой парой еще не работали"""
     
@@ -41,10 +41,8 @@ def confirm_similarity(couple_id: int, confirm: bool = True) -> None:
         with connection.cursor() as cursor:
             if confirm:
                 cursor.execute(f"UPDATE {MYSQL.TABLE.value} SET is_duplicate=1 WHERE id={couple_id}")
-                print("Подтвердили")
             else:
                 cursor.execute(f"UPDATE {MYSQL.TABLE.value} SET is_duplicate=0 WHERE id={couple_id}")
-                print("Опровергли")
 
             connection.commit()
     finally:
@@ -61,6 +59,19 @@ def refute_similarity(couple_id: int) -> None: # Опровергнуть схо
 
     finally:
         connection.close()
+
+def get_last_viewed_skill() -> SimilarCouple | None:
+    connection = connect_to_db()
+    with connection.cursor() as cursor:
+        cursor.execute(f"""SELECT * FROM {MYSQL.TABLE.value} WHERE is_duplicate IS NOT NULL""")
+        try:res = SimilarCouple(*cursor.fetchall()[-1].values())
+        except: res = None
+        connection.close()
+
+        if res is None: return
+        refute_similarity(couple_id=res.id) # Делаем это для того, чтобы мы могли несколько раз подряд нажимать кнопку назад 
+        return res
+    
 
 
 if __name__ == "__main__":

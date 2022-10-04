@@ -66,35 +66,51 @@ async def show_question(message: types.Message, state: FSMContext):
     Основной метод, который будет обрабатывать ответы пользователя и изменять значения в БД
     """
     global CURRENT_QUESTION_ID
-    if message.text.lower() not in {"да", "нет"}:
+    if message.text.lower() not in {"да", "назад", "нет"}:
         asyncio.create_task(input_invalid(message))
         return
 
     # Меняем значения в БД
-    if message.text.lower().strip() == 'да':
-        database.confirm_similarity(couple_id=CURRENT_QUESTION_ID)
-        log.warning("Id: %d - Accept", CURRENT_QUESTION_ID)
-    elif message.text.lower().strip() == 'нет':
-        log.info("Id: %d - Failed", CURRENT_QUESTION_ID)
-        database.confirm_similarity(couple_id=CURRENT_QUESTION_ID, confirm=False)
-
-    # Получаем новый вопрос
-    couple_skills = database.get_couple_skills_from_database()
-    if not couple_skills:
-        await message.answer("Все вопросы закончились! Спасибо", reply_markup=types.ReplyKeyboardRemove())
-        quit()
-    CURRENT_QUESTION_ID = couple_skills.id
-    log.info("Couple: %s & %s", couple_skills.demand_name, couple_skills.dup_demand_name)
-
-
-    # Показываем вопрос пользователю
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-    markup.add('Нет', 'Да')
-    await StateMachine.question.set() # Показываем следующий вопрос
-    await message.answer(f"❔Одинаковые навыки?\n\n"
-                            f"1️⃣ \t{couple_skills.demand_name.capitalize()}\n"
-                            f"2️⃣\t{couple_skills.dup_demand_name.capitalize()}\n\n"
-                            f"🤔Совместимость: {couple_skills.similarity}%\n", reply_markup=markup)
+    if message.text.lower().strip() == "назад":
+        log.info("Вернулись назад")
+        previos_skill = database.get_last_viewed_skill()
+        if previos_skill:
+            await StateMachine.question.set()
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
+            markup.add('Нет', 'Назад', 'Да')
+            await message.answer(f"❔Одинаковые навыки?\n\n"
+                                f"1️⃣ \t{previos_skill.demand_name.capitalize()}\n"
+                                f"2️⃣\t{previos_skill.dup_demand_name.capitalize()}\n\n"
+                                f"🤔Совместимость: {previos_skill.similarity}%\n", reply_markup=markup)
+            CURRENT_QUESTION_ID = previos_skill.id
+        else:
+            await message.answer("Ранее вы еще не отвечали на вопросы. Ответьте на предыдущий вопрос")
+        
+        
+    else:
+        if message.text.lower().strip() == 'да':
+            database.confirm_similarity(couple_id=CURRENT_QUESTION_ID)
+            log.warning("Id: %d - Accept", CURRENT_QUESTION_ID)
+        elif message.text.lower().strip() == 'нет':
+            log.info("Id: %d - Failed", CURRENT_QUESTION_ID)
+            database.confirm_similarity(couple_id=CURRENT_QUESTION_ID, confirm=False)
+        
+        # Получаем новый вопрос
+        couple_skills = database.get_couple_skills_from_database()
+        if not couple_skills:
+            await message.answer("Все вопросы закончились! Спасибо", reply_markup=types.ReplyKeyboardRemove())
+            quit()
+        log.info("Couple: %s & %s", couple_skills.demand_name, couple_skills.dup_demand_name)
+        CURRENT_QUESTION_ID = couple_skills.id
+        
+        # Показываем вопрос пользователю
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
+        markup.add('Нет', 'Назад', 'Да')
+        await StateMachine.question.set() # Показываем следующий вопрос
+        await message.answer(f"❔Одинаковые навыки?\n\n"
+                                f"1️⃣ \t{couple_skills.demand_name.capitalize()}\n"
+                                f"2️⃣\t{couple_skills.dup_demand_name.capitalize()}\n\n"
+                                f"🤔Совместимость: {couple_skills.similarity}%\n", reply_markup=markup)
 
 
 # Функция для удаления сообщений
