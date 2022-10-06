@@ -1,48 +1,79 @@
-import sqlite3
+import pymysql
+from pymysql.connections import Connection
 
-from config import Skill
+from config import Skill, MYSQL
 
 
-def connect_to_db(db_name: str = "skills.db") -> Skill | None:
-    db = sqlite3.connect(db_name)
-    return  db, db.cursor()
+def connect_to_db() -> Connection:
+    try:
+        connection = pymysql.connect(
+                host=MYSQL.HOST.value,
+                port=MYSQL.PORT.value,
+                database=MYSQL.DB.value,
+                user=MYSQL.USER.value,
+                password=MYSQL.PASSWORD.value,
+                cursorclass=pymysql.cursors.DictCursor
+            )
+        print("Success connection to db..")
+        return connection
 
-def get_not_viewed_skill():
-    db, cursor = connect_to_db()
-    cursor.execute("SELECT * FROM skill WHERE confirm IS NULL LIMIT 1")
-    result = cursor.fetchone()
+    except Exception as ex:
+        exit(f"Error by connection: {ex}")
+
+
+def get_skill_from_database() -> Skill:
+    """Возвращает самую первую пару навыков, у которой значение is_duplicate является None. 
+    Таким образом, мы понимаем, что с этой парой еще не работали"""
     
-    db.close() 
-    if result:return Skill(*result)
-    else: return 
+    connection = connect_to_db()
+    with connection.cursor() as cursor:
+        query_get_null_couple = f"SELECT * FROM {MYSQL.TABLE.value}  WHERE is_displayed IS NULL LIMIT 1"
 
-def confirm_profession(skill_id: int) -> None:
-    db, cursor = connect_to_db()
-    cursor.execute(f"UPDATE skill SET is_profession=true WHERE id={skill_id}")
-    db.commit()
-    db.close()
+        cursor.execute(query_get_null_couple)
+        skill = cursor.fetchone()
+        connection.close()
+        if skill:return Skill(iD=skill['id'], title=skill['name'], is_dislayed=skill['is_displayed'])
+        else:return
 
-def set_confirm_skill(skill_id: int, confirm: bool = True) -> None:
-    db, cursor = connect_to_db()
-    if confirm:
-        cursor.execute(f"UPDATE skill SET confirm=1 WHERE id={skill_id}")
-    else:
-        cursor.execute(f"UPDATE skill SET confirm=0 WHERE id={skill_id}")
-    db.commit()
-    db.close()
-    
+def confirm_skill(id: int, confirm: bool = True) -> None:
+    connection = connect_to_db()
+    try:
+        with connection.cursor() as cursor:
+            if confirm:
+                cursor.execute(f"UPDATE {MYSQL.TABLE.value} SET is_displayed=1 WHERE id={id}")
+            else:
+                cursor.execute(f"UPDATE {MYSQL.TABLE.value} SET is_displayed=0 WHERE id={id}")
 
-def zeroize_table():
-    db, cursor = connect_to_db()
-    cursor.execute("UPDATE skill SET confirm = NULL, is_profession=false WHERE confirm NOT NULL")
-    db.commit()
-    db.close()
+            connection.commit()
+    finally:
+        connection.close()
 
-def get_all_professions() -> tuple:
-    db, cursor = connect_to_db()
-    cursor.execute("SELECT title FROM skill WHERE is_profession=true")
-    return cursor.fetchall()
+
+def refute_skill(id: int) -> None: # Опровергнуть сходство
+    connection = connect_to_db()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"UPDATE {MYSQL.TABLE.value} SET is_displayed=null WHERE id={id}")
+            connection.commit()
+            print("Опровергли")
+
+    finally:
+        connection.close()
+
+def get_last_viewed_skill() -> Skill | None:
+    connection = connect_to_db()
+    with connection.cursor() as cursor:
+        cursor.execute(f"""SELECT * FROM {MYSQL.TABLE.value} WHERE is_displayed IS NOT NULL""")
+        skill = cursor.fetchall()[-1]
+
+        try:res = Skill(iD=skill['id'], title=skill['name'], is_dislayed=skill['is_displayed'])
+        except: res = None 
+        connection.close()
+
+        if res is None: return
+        refute_skill(id=res.iD) # Делаем это для того, чтобы мы могли несколько раз подряд нажимать кнопку назад 
+        return res
 
 
 if __name__ == "__main__":
-    zeroize_table()
+    print(get_skill_from_database())
