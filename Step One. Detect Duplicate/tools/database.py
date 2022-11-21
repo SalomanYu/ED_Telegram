@@ -55,7 +55,6 @@ def refute_similarity(couple_id: int) -> None: # Опровергнуть схо
         with connection.cursor() as cursor:
             cursor.execute(f"UPDATE {MYSQL.TABLE.value} SET is_duplicate=null WHERE id={couple_id}")
             connection.commit()
-            print("Опровергли")
 
     finally:
         connection.close()
