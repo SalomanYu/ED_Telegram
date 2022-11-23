@@ -15,7 +15,7 @@ class MYSQL(Enum):
     USER = USER
     PASSWORD = PASS
     PORT = 3306
-    DB = "edwica_develop"
+    DB = "edwica"
     TABLE = "demand"
 
 class Skill(NamedTuple):
