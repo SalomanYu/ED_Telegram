@@ -1,10 +1,12 @@
 import openpyxl
 import os
 import json
+from loguru import logger
 from professions_tools.preparation import Profession, IS_TECHNICAL_COLUMN, AREA_COLUMN, PROFESSION_COLUMN, PROFESSIONS_LIST_SHEET, JSON_PATH, PROFESSIONS_FOLDER
 
 
 def update_all_files():
+    logger.warning("Заполняем excel-таблицы новыми значениями")
     professions = get_professions_from_json(JSON_PATH)
     for prof in professions:
         find_and_update_profession_in_excelFile(prof)
@@ -27,5 +29,6 @@ def find_and_update_profession_in_excelFile(profession: Profession):
                 match profession.IsTechnical:
                     case True: row_values[IS_TECHNICAL_COLUMN].value = 1
                     case False: row_values[IS_TECHNICAL_COLUMN].value = 0
+                logger.info(f"Записали профессию: {profession.Title} в файл - {file}")
                 book.save(os.path.join(PROFESSIONS_FOLDER, file))    
                 return
