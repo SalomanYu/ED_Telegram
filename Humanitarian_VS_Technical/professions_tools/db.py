@@ -10,7 +10,7 @@ def get_profession() -> Profession | None:
         item = next((prof for prof in data if prof["is_technical"] is None))
         return Profession(*item.values())
     except StopIteration:
-        print("Професси закончились!")
+        return None
 
 def get_last_edited_profession() -> Profession | None:
     data = json.load(open(JSONPATH, "r", encoding="utf-8"))
@@ -19,7 +19,7 @@ def get_last_edited_profession() -> Profession | None:
         unmark_profession(item["id"])
         return Profession(*item.values())
     except StopIteration:
-        print("Не нашли профессию")
+        return None
 
 def mark_profession_as_technical(prof_id: int) -> None:
     data = json.load(open(JSONPATH, "r", encoding="utf-8"))
