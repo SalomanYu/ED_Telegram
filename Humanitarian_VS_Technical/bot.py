@@ -15,7 +15,7 @@ storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
 logger.remove() # Запрещаем выводить сообщения в терминал
-logger.add("Logging/bot.log", format="{time} {level} {message}", level="INFO", rotation="10 MB", compression="zip", mode="w")
+logger.add("Data/Logging/bot.log", format="{time} {level} {message}", level="INFO", rotation="10 MB", compression="zip", mode="w")
 CURRENT_PROFESSION_ID = None
 
 

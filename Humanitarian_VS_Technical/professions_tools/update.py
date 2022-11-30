@@ -2,20 +2,24 @@ import openpyxl
 import os
 import json
 from loguru import logger
+from rich.progress import track
 from professions_tools.preparation import Profession, IS_TECHNICAL_COLUMN, AREA_COLUMN, PROFESSION_COLUMN, PROFESSIONS_LIST_SHEET, JSON_PATH, PROFESSIONS_FOLDER
 
 
 def update_all_files():
+    print("Professions are over.")
     logger.warning("Заполняем excel-таблицы новыми значениями")
     professions = get_professions_from_json(JSON_PATH)
-    for prof in professions:
-        find_and_update_profession_in_excelFile(prof)
+    for prof in track(range(len(professions)), description="[green]Update tables..."):
+        find_and_update_profession_in_excelFile(professions[prof])
+    print("Program has done.")
+    
 
-def get_professions_from_json(path: str) -> tuple[Profession]:
+def get_professions_from_json(path: str) -> list[Profession]:
     file = open(path, "r", encoding="utf-8")
     data = json.load(file)
     file.close()
-    return (Profession(*prof.values()) for prof in data)
+    return [Profession(*prof.values()) for prof in data]
 
 def find_and_update_profession_in_excelFile(profession: Profession):
     for file in os.listdir(PROFESSIONS_FOLDER):
