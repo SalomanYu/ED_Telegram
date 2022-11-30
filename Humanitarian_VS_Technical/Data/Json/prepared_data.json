@@ -3,25 +3,25 @@
     "id": 1,
     "title": "Спасатель МЧС",
     "area": "Правоохранительные органы",
-    "is_technical": true
+    "is_technical": null
   },
   {
     "id": 2,
     "title": "Горноспасатель",
     "area": "Правоохранительные органы",
-    "is_technical": false
+    "is_technical": null
   },
   {
     "id": 3,
     "title": "Водолаз",
     "area": "Правоохранительные органы",
-    "is_technical": true
+    "is_technical": null
   },
   {
     "id": 4,
     "title": "Респираторщик",
     "area": "Правоохранительные органы",
-    "is_technical": false
+    "is_technical": null
   },
   {
     "id": 5,
@@ -573,19 +573,19 @@
     "id": 96,
     "title": "Дознаватель ФСКН России",
     "area": "Правоохранительные органы",
-    "is_technical": true
+    "is_technical": null
   },
   {
     "id": 97,
     "title": "Кинолог ФСКН",
     "area": "Правоохранительные органы",
-    "is_technical": true
+    "is_technical": null
   },
   {
     "id": 98,
     "title": "Следователь ФСКН России",
     "area": "Правоохранительные органы",
-    "is_technical": false
+    "is_technical": null
   },
   {
     "id": 99,

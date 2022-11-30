@@ -1,13 +1,16 @@
-from professions_tools import  db, update
+import os
+from loguru import logger
+
 from aiogram import types, Bot, Dispatcher, executor
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import asyncio
-from loguru import logger
 
 from bot_config import StateMachine
+from professions_tools import  db, update
 
-bot = Bot("5415284989:AAFApPUIKsj8DxotuNlfrOHs42oacVZipmY")
+TOKEN = os.getenv("HH_BOT")
+bot = Bot(TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
@@ -72,8 +75,8 @@ async def show_question(message: types.Message, state: FSMContext):
             logger.info(f"{message.from_user.username}: {previos_profession}") 
             await message.answer("\n".join((
                 "Профессия техническая?",
-                f"Профобласть: {profession.Area}",
-                f"Название: {profession.Title}",
+                f"Профобласть: {previos_profession.Area}",
+                f"Название: {previos_profession.Title}",
             )), reply_markup=markup)
             CURRENT_PROFESSION_ID = previos_profession.Id
         else:
