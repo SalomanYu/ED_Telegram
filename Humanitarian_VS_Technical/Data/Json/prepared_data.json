@@ -1,50 +1,44 @@
 [
   {
-    "id": 428,
-    "title": "Юрист по интеллектуальному праву",
-    "area": "Юриспруденция",
+    "id": 1,
+    "title": "Делопроизводитель",
+    "area": "Офисные службы",
+    "file": "Data/Professions\\11 Офисные службы.xlsx",
     "is_technical": false
   },
   {
-    "id": 470,
-    "title": "Нейромаркетолог",
-    "area": "Маркетинг / Реклама. / PR",
+    "id": 55,
+    "title": "Менеджер по продажам ГСМ",
+    "area": "Продажи",
+    "file": "Data/Professions\\122 Продажи.xlsx",
     "is_technical": false
   },
   {
-    "id": 540,
-    "title": "Креативный директор",
-    "area": "СМИ / Издательства",
-    "is_technical": false
-  },
-  {
-    "id": 666,
-    "title": "Электромонтер",
-    "area": "Автомобилестроение",
+    "id": 182,
+    "title": "Разработчик ПО контроллеров машин и механизмов",
+    "area": "Ит / Интернет / Телеком",
+    "file": "Data/Professions\\161 Ит _ Интернет _ Телеком.xlsx",
     "is_technical": true
   },
   {
-    "id": 757,
-    "title": "Специалист по продажам кредитных продуктов",
-    "area": "Банки и кредитные компании",
-    "is_technical": false
-  },
-  {
-    "id": 782,
-    "title": "Репродуктолог",
+    "id": 805,
+    "title": "Экзотолог",
     "area": "Ветеринария",
-    "is_technical": true
+    "file": "Data/Professions\\Ветеринария.xlsx",
+    "is_technical": false
   },
   {
-    "id": 783,
-    "title": "Digital-дизайнер",
+    "id": 877,
+    "title": "Технолог",
     "area": "Дизайн и полиграфия",
+    "file": "Data/Professions\\Дизайн и полиграфия.xlsx",
     "is_technical": true
   },
   {
-    "id": 878,
-    "title": "Помощник терапевта",
+    "id": 1226,
+    "title": "Эпидемиолог неинфекционный",
     "area": "Здоровье и медицина",
+    "file": "Data/Professions\\Медицина и здоровье.xlsx",
     "is_technical": false
   }
 ]
