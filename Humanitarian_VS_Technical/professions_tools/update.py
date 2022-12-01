@@ -11,7 +11,7 @@ def update_all_files():
     logger.warning("Заполняем excel-таблицы новыми значениями")
     professions = get_professions_from_json(JSON_PATH)
     for prof in track(range(len(professions)), description="[green]Update tables..."):
-        find_and_update_profession_in_excelFile(professions[prof])
+        find_profession_in_excelFile(professions[prof])
     print("Program has done.")
     
 
@@ -21,18 +21,27 @@ def get_professions_from_json(path: str) -> list[Profession]:
     file.close()
     return [Profession(*prof.values()) for prof in data]
 
-def find_and_update_profession_in_excelFile(profession: Profession):
+def find_profession_in_excelFile(profession: Profession):
     for file in os.listdir(PROFESSIONS_FOLDER):
         if not file.endswith(".xlsx"): continue
-        book = openpyxl.load_workbook(os.path.join(PROFESSIONS_FOLDER, file))
-        sheet = book[PROFESSIONS_LIST_SHEET]
-        for i, row in enumerate(sheet.iter_rows()):
-            row_values = list(row)
-            if i == 0: row_values[IS_TECHNICAL_COLUMN].value = "Профессия техническая?"
-            if profession.Title == row_values[PROFESSION_COLUMN].value:
-                match profession.IsTechnical:
-                    case True: row_values[IS_TECHNICAL_COLUMN].value = 1
-                    case False: row_values[IS_TECHNICAL_COLUMN].value = 0
-                logger.info(f"Записали профессию: {profession.Title} в файл - {file}")
-                book.save(os.path.join(PROFESSIONS_FOLDER, file))    
-                return
+        try:
+            book = openpyxl.load_workbook(os.path.join(PROFESSIONS_FOLDER, file))
+            updatedBook = update_profession_in_excelFile(book, profession)
+            if updatedBook is None: continue
+            logger.info(f"Записали профессию: {profession.Title} в файл: {file}")
+            updatedBook.save(os.path.join(PROFESSIONS_FOLDER, file)) 
+        except KeyError:
+            "Поврежденный xlsx-файл"
+            logger.error(f"{file} Поврежден и не может быть открыт!")
+            continue
+        
+def update_profession_in_excelFile(book: openpyxl.Workbook, profession: Profession) -> openpyxl.Workbook:
+    sheet = book[PROFESSIONS_LIST_SHEET]
+    for i, row in enumerate(sheet.iter_rows()):
+        row_values = list(row)
+        if i == 0: row_values[IS_TECHNICAL_COLUMN].value = "Профиль"
+        if profession.Title == row_values[PROFESSION_COLUMN].value:
+            match profession.IsTechnical:
+                case True: row_values[IS_TECHNICAL_COLUMN].value = "Технический"
+                case False: row_values[IS_TECHNICAL_COLUMN].value = "Гуманитарный"
+            return book

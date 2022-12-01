@@ -45,8 +45,8 @@ def convert_data_to_json_format(data: list[Profession]) -> list[dict]:
     json_data = []
     for index, item in enumerate(data):
         match item.IsTechnical:
-            case 1.0: is_techical = True
-            case 0.0: is_techical = False
+            case "Технический": is_techical = True
+            case "Гуманитарный": is_techical = False
             case _: is_techical = None
         json_data.append({"id":index+1, "title":item.Title, "area":item.Area, "is_technical":is_techical})
     return json_data

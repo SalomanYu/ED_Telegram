@@ -14,7 +14,7 @@ bot = Bot(TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
-logger.remove() # Запрещаем выводить сообщения в терминал
+logger.remove()
 logger.add("Data/Logging/bot.log", format="{time} {level} {message}", level="INFO", rotation="10 MB", compression="zip", mode="w")
 CURRENT_PROFESSION_ID = None
 
@@ -45,38 +45,32 @@ async def start(message: types.Message, state: FSMContext):
         return
     CURRENT_PROFESSION_ID = profession.Id
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-    markup.add('Нет', 'Да')
+    markup.add('Гуманитарный', 'Назад', 'Технический')
     logger.info(f"{message.from_user.username}: {profession}") 
 
     await message.answer("\n".join((
-        "Профессия техническая?",
-        f"Профобласть: {profession.Area}",
-        f"Название: {profession.Title}",
+        "Выберите профиль профессии:",
+        profession.Title,
     )), reply_markup=markup)
     await StateMachine.question.set()
 
 @dp.message_handler(state=StateMachine.question)
 async def show_question(message: types.Message, state: FSMContext):
     global CURRENT_PROFESSION_ID
-    if message.text.lower() not in {"да", "назад", "нет"}:
+    if message.text.lower() not in {"гуманитарный", "назад", "технический"}:
         asyncio.create_task(input_invalid(message))
-        await state.finish()
-        update.update_all_files()
         return
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-    markup.add('Нет', 'Назад', 'Да')
+    markup.add('Гуманитарный', 'Назад', 'Технический')
 
     if message.text.lower() == 'назад':
         previos_profession = db.get_last_edited_profession()
         if previos_profession:
             await StateMachine.question.set()
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-            markup.add('Нет', 'Назад', 'Да')
             logger.info(f"{message.from_user.username}: {previos_profession}") 
             await message.answer("\n".join((
-                "Профессия техническая?",
-                f"Профобласть: {previos_profession.Area}",
-                f"Название: {previos_profession.Title}",
+                "Выберите профиль профессии:",
+                previos_profession.Title,
             )), reply_markup=markup)
             CURRENT_PROFESSION_ID = previos_profession.Id
         else:
@@ -84,8 +78,8 @@ async def show_question(message: types.Message, state: FSMContext):
             await message.answer("Ранее вы еще не отвечали на вопросы!")
     else:
         match message.text.lower():
-            case "да": db.mark_profession_as_technical(CURRENT_PROFESSION_ID)
-            case "нет": db.mark_profession_as_humanitarian(CURRENT_PROFESSION_ID)
+            case "технический": db.mark_profession_as_technical(CURRENT_PROFESSION_ID)
+            case "гуманитарный": db.mark_profession_as_humanitarian(CURRENT_PROFESSION_ID)
         profession = db.get_profession()
         if profession is None:
             logger.warning(f"{message.from_user.username}: Закончились вопросы") 
@@ -95,9 +89,8 @@ async def show_question(message: types.Message, state: FSMContext):
             return
         CURRENT_PROFESSION_ID = profession.Id
         await message.answer("\n".join((
-            "Профессия техническая?",
-            f"Профобласть: {profession.Area}",
-            f"Название: {profession.Title}",
+            "Выберите профиль профессии:",
+            profession.Title,
         )), reply_markup=markup)
         await StateMachine.question.set()
 
