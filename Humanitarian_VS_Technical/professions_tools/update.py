@@ -43,5 +43,6 @@ def set_profile_for_profession(sheet, profession: Profession):
             match profession.IsTechnical:
                 case True: row_values[IS_TECHNICAL_COLUMN].value = "Технический"
                 case False: row_values[IS_TECHNICAL_COLUMN].value = "Гуманитарный"
+                case _: row_values[IS_TECHNICAL_COLUMN].value = ""
             logger.info(f"Записали профессию: {profession.Title}")
             break
