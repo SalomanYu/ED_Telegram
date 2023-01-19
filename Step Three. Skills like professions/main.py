@@ -49,7 +49,8 @@ async def start(message: types.Message):
     
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add('Нет', 'Да')
-    await message.answer(f"Оставить навык?\n- {skill.title}", reply_markup=markup)
+    _, remains = database.get_how_much_is_left()
+    await message.answer(f"Оставить навык?\n- {skill.title}\nОсталось:{remains}", reply_markup=markup)
     await StateMachine.question.set()
 
 # Переключение между вопросами 
@@ -68,11 +69,13 @@ async def show_question(message: types.Message, state: FSMContext):
 
     if message.text.lower().strip() == 'назад':
         previos_skill = database.get_last_viewed_skill()
+        print(previos_skill, "previos")
         if previos_skill:
             await StateMachine.question.set()
             markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
             markup.add('Нет', 'Назад', 'Да')
-            await message.answer(f"Оставить навык?\n- {previos_skill.title}", reply_markup=markup)
+            _, remains = database.get_how_much_is_left()
+            await message.answer(f"Оставить навык?\n- {previos_skill.title}\nОсталось:{remains}", reply_markup=markup)
             CURRENT_SKILL_ID = previos_skill.iD
         else:
             await message.answer("Ранее вы еще не отвечали на вопросы!")
@@ -103,7 +106,8 @@ async def show_question(message: types.Message, state: FSMContext):
 
         # Показываем вопрос пользователю
         await StateMachine.question.set() # Показываем следующий вопрос
-        await message.answer(f"Оставить навык?\n- {skill.title}", reply_markup=markup)
+        _, remains = database.get_how_much_is_left()
+        await message.answer(f"Оставить навык?\n- {skill.title}\nОсталось:{remains}", reply_markup=markup)
 
 
 # Хендлер для проверки навыка на профессии 

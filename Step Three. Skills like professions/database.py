@@ -68,11 +68,26 @@ def get_last_viewed_skill() -> Skill | None:
 
         try:res = Skill(iD=skill['id'], title=skill['name'], is_dislayed=skill['is_displayed'])
         except: res = None 
-        connection.close()
 
         if res is None: return
         refute_skill(id=res.iD) # Делаем это для того, чтобы мы могли несколько раз подряд нажимать кнопку назад 
+        connection.close()
         return res
+
+def get_how_much_is_left() -> tuple[int, int]:
+    connection = connect_to_db()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT COUNT(*) FROM {MYSQL.TABLE.value}")
+            count_all_values = cursor.fetchone()["COUNT(*)"]
+
+            cursor.execute(f"SELECT COUNT(*) FROM {MYSQL.TABLE.value} WHERE is_displayed IS NULL")
+            count_null_values = cursor.fetchone()["COUNT(*)"]
+            return count_all_values, count_null_values
+    except BaseException as err:
+        print(err)
+    finally:
+        connection.close()
 
 
 if __name__ == "__main__":
