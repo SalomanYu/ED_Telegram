@@ -44,9 +44,8 @@ async def start(message: types.Message):
         log.warning("Закончились вопросы")
         await message.answer("Все вопросы закончились! Спасибо", reply_markup=types.ReplyKeyboardRemove())
         quit()
-    # log.info("Couple: %s & %s", couple_skills.demand_name, couple_skills.dup_demand_name)
     CURRENT_SKILL_ID = skill.iD # Меняем значение нашей переменной, тем самым указывая корректный айди вопроса, который нужно обработать
-    
+    print(CURRENT_SKILL_ID)
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add('Нет', 'Да')
     _, remains = database.get_how_much_is_left()
@@ -63,20 +62,19 @@ async def show_question(message: types.Message, state: FSMContext):
     if message.text.lower() not in {"да", "назад", "нет"}:
         asyncio.create_task(input_invalid(message))
         return
-
+    
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add('Нет', 'Назад', 'Да')
-
     if message.text.lower().strip() == 'назад':
-        previos_skill = database.get_last_viewed_skill()
+        previos_skill = database.get_previos_skill(CURRENT_SKILL_ID)
         print(previos_skill, "previos")
         if previos_skill:
             await StateMachine.question.set()
-            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-            markup.add('Нет', 'Назад', 'Да')
             _, remains = database.get_how_much_is_left()
             await message.answer(f"Оставить навык?\n- {previos_skill.title}\nОсталось:{remains}", reply_markup=markup)
             CURRENT_SKILL_ID = previos_skill.iD
+            print(CURRENT_SKILL_ID)
+
         else:
             await message.answer("Ранее вы еще не отвечали на вопросы!")
     else:
@@ -101,8 +99,7 @@ async def show_question(message: types.Message, state: FSMContext):
             await message.answer("Все вопросы закончились! Спасибо", reply_markup=types.ReplyKeyboardRemove())
             quit()
         CURRENT_SKILL_ID = skill.iD
-        # log.info("Couple: %s & %s", couple_skills.demand_name, couple_skills.dup_demand_name)
-
+        print(CURRENT_SKILL_ID)
 
         # Показываем вопрос пользователю
         await StateMachine.question.set() # Показываем следующий вопрос

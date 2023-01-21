@@ -60,11 +60,11 @@ def refute_skill(id: int) -> None: # Опровергнуть сходство
     finally:
         connection.close()
 
-def get_last_viewed_skill() -> Skill | None:
+def get_previos_skill(current_id: int) -> Skill | None:
     connection = connect_to_db()
     with connection.cursor() as cursor:
-        cursor.execute(f"""SELECT * FROM {MYSQL.TABLE.value} WHERE is_displayed IS NOT NULL""")
-        skill = cursor.fetchall()[-1]
+        cursor.execute(f"""SELECT * FROM {MYSQL.TABLE.value} WHERE id = {current_id-1}""")
+        skill = cursor.fetchone()
 
         try:res = Skill(iD=skill['id'], title=skill['name'], is_dislayed=skill['is_displayed'])
         except: res = None 
