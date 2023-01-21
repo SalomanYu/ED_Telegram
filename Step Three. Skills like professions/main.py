@@ -45,7 +45,6 @@ async def start(message: types.Message):
         await message.answer("Все вопросы закончились! Спасибо", reply_markup=types.ReplyKeyboardRemove())
         quit()
     CURRENT_SKILL_ID = skill.iD # Меняем значение нашей переменной, тем самым указывая корректный айди вопроса, который нужно обработать
-    print(CURRENT_SKILL_ID)
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add('Нет', 'Да')
     _, remains = database.get_how_much_is_left()
@@ -67,13 +66,11 @@ async def show_question(message: types.Message, state: FSMContext):
     markup.add('Нет', 'Назад', 'Да')
     if message.text.lower().strip() == 'назад':
         previos_skill = database.get_previos_skill(CURRENT_SKILL_ID)
-        print(previos_skill, "previos")
         if previos_skill:
             await StateMachine.question.set()
             _, remains = database.get_how_much_is_left()
             await message.answer(f"Оставить навык?\n- {previos_skill.title}\nОсталось:{remains}", reply_markup=markup)
             CURRENT_SKILL_ID = previos_skill.iD
-            print(CURRENT_SKILL_ID)
 
         else:
             await message.answer("Ранее вы еще не отвечали на вопросы!")

@@ -55,7 +55,6 @@ def refute_skill(id: int) -> None: # Опровергнуть сходство
         with connection.cursor() as cursor:
             cursor.execute(f"UPDATE {MYSQL.TABLE.value} SET is_displayed=null WHERE id={id}")
             connection.commit()
-            print("Опровергли")
 
     finally:
         connection.close()
